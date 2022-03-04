@@ -13,6 +13,7 @@ class optimizer:
         self._defenders = []
         self._midfielders = []
         self._forwards = []
+        self._players_name = [None] * self._total_players
 
         # Get values
         self._get_info(fpl)
@@ -28,6 +29,7 @@ class optimizer:
             self._scores[player["id"] - 1] = -player["event_points"]
             self._costs[player["id"] - 1] = player["now_cost"] / 10
             add_positions[player["element_type"]](player["id"] - 1)
+            self._players_name[player["id"] - 1] = f"{player['first_name']} {player['second_name']}"
 
 
     def declare_constrains(self, budget = 100):
@@ -60,12 +62,12 @@ class optimizer:
 
 
     def _declare_midfielders_constrain(self):
-        self._lhs_ub.append([int(x in self._midfielders) for x in range(self._total_players)])
+        self._lhs_ub.append([-int(x in self._midfielders) for x in range(self._total_players)])
         self._rhs_ub.append([-2])
 
 
     def _declare_forwards_constrain(self):
-        self._lhs_ub.append([int(x in self._forwards) for x in range(self._total_players)])
+        self._lhs_ub.append([-int(x in self._forwards) for x in range(self._total_players)])
         self._rhs_ub.append([-1])
 
 
@@ -83,8 +85,10 @@ class optimizer:
             A_ub = self._lhs_ub, b_ub = self._rhs_ub,
             A_eq = self._lhs_eq, b_eq = self._rhs_eq,
             bounds = self._bounds,
-            method = "revised simplex",
-            options = {
-                "disp" : True,
-                #"integrality" :
-            })
+            method = "revised simplex")
+
+        print(f"Optimal: {-result.fun}")
+        for x in range(self._total_players):
+            if result.x[x] == 0:
+                continue
+            print(self._players_name[x])
