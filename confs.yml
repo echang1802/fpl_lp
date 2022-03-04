@@ -1,0 +1,4 @@
+fpl:
+  base_url: https://fantasy.premierleague.com/api/
+  endpoints:
+    base: bootstrap-static/
