@@ -14,9 +14,15 @@ class optimizer:
         self._midfielders = []
         self._forwards = []
         self._players_name = [None] * self._total_players
+        self._initialize_teams(fpl)
 
         # Get values
         self._get_info(fpl)
+
+    def _initialize_teams(self, fpl):
+        self._teams = {}
+        for team in fpl.teams():
+            self._teams[team["code"]] = {"name": team["name"], "players" : []}
 
     def _get_info(self, fpl):
         add_positions = {
@@ -30,6 +36,7 @@ class optimizer:
             self._costs[player["id"] - 1] = player["now_cost"] / 10
             add_positions[player["element_type"]](player["id"] - 1)
             self._players_name[player["id"] - 1] = f"{player['first_name']} {player['second_name']}"
+            self._teams[player["team_code"]]["players"].append(player["id"] - 1)
 
 
     def declare_constrains(self, budget = 100):
@@ -42,6 +49,7 @@ class optimizer:
         self._declare_defenders_constrain()
         self._declare_midfielders_constrain()
         self._declare_forwards_constrain()
+        self._declare_teams_constrain()
         self._declare_budget_constrain(budget)
         self._declare_bound_constrain()
 
@@ -59,21 +67,33 @@ class optimizer:
     def _declare_defenders_constrain(self):
         self._lhs_ub.append([-int(x in self._defenders) for x in range(self._total_players)])
         self._rhs_ub.append([-3])
+        self._lhs_ub.append([int(x in self._defenders) for x in range(self._total_players)])
+        self._rhs_ub.append([5])
 
 
     def _declare_midfielders_constrain(self):
         self._lhs_ub.append([-int(x in self._midfielders) for x in range(self._total_players)])
         self._rhs_ub.append([-2])
+        self._lhs_ub.append([int(x in self._midfielders) for x in range(self._total_players)])
+        self._rhs_ub.append([5])
 
 
     def _declare_forwards_constrain(self):
         self._lhs_ub.append([-int(x in self._forwards) for x in range(self._total_players)])
         self._rhs_ub.append([-1])
+        self._lhs_ub.append([int(x in self._forwards) for x in range(self._total_players)])
+        self._rhs_ub.append([3])
 
 
     def _declare_budget_constrain(self, budget):
         self._lhs_ub.append(self._costs)
         self._rhs_ub.append([budget])
+
+
+    def _declare_teams_constrain(self):
+        for _,team in self._teams.items():
+            self._lhs_ub.append([int(x in team["players"]) for x in range(self._total_players)])
+            self._rhs_ub.append([3])
 
 
     def _declare_bound_constrain(self):

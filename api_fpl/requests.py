@@ -43,3 +43,6 @@ class api:
 
     def players(self):
         return self._players
+
+    def teams(self):
+        return self._teams
