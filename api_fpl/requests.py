@@ -17,8 +17,8 @@ class api:
             self._endpoints = confs["endpoints"]
 
 
-    def _request(self, endpoint):
-        url = f"{self._base_url}{self._endpoints[endpoint]}"
+    def _request(self, endpoint, param = ""):
+        url = f"{self._base_url}{self._endpoints[endpoint]}{param}/"
         result = requests.get(url)
         return result.json()
 
