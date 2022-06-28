@@ -9,8 +9,6 @@ param gweeks := 38;
 # Players
 set Players := { read "data/players_costs.dat" as "<1s>" };
 
-# Positions
-
 # Goalkeepers
 set Goalkeepers := { read "data/goalkeepers.dat" as "<1s>" };
 
@@ -23,65 +21,8 @@ set Midfielders := { read "data/midfielders.dat" as "<1s>" };
 # Forwards
 set Forwards := { read "data/forwards.dat" as "<1s>" };
 
-# Arsenal
-set Arsenal := { read "data/Arsenal_players.dat" as "<1s>" };
-
-# Aston Villa
-set Aston_Villa := { read "data/Aston Villa_players.dat" as "<1s>" };
-
-# Brentford
-set Brentford := { read "data/Brentford_players.dat" as "<1s>" };
-
-# Brighton
-set Brighton := { read "data/Brighton_players.dat" as "<1s>" };
-
-# Burnley
-set Burnley := { read "data/Burnley_players.dat" as "<1s>" };
-
-# Chelsea
-set Chelsea := { read "data/Chelsea_players.dat" as "<1s>" };
-
-# Crystal Palace
-set Crystal_Palace := { read "data/Crystal Palace_players.dat" as "<1s>" };
-
-# Everton
-set Everton := { read "data/Everton_players.dat" as "<1s>" };
-
-# Leeds
-set Leeds := { read "data/Leeds_players.dat" as "<1s>" };
-
-# Leicester
-set Leicester := { read "data/Leicester_players.dat" as "<1s>" };
-
-# Liverpool
-set Liverpool := { read "data/Liverpool_players.dat" as "<1s>" };
-
-# Man City
-set Man_City := { read "data/Man City_players.dat" as "<1s>" };
-
-# Man Utd
-set Man_Utd := { read "data/Man Utd_players.dat" as "<1s>" };
-
-# Newcastle
-set Newcastle := { read "data/Newcastle_players.dat" as "<1s>" };
-
-# Norwich
-set Norwich := { read "data/Norwich_players.dat" as "<1s>" };
-
-# Southampton
-set Southampton := { read "data/Southampton_players.dat" as "<1s>" };
-
-# Spurs
-set Spurs := { read "data/Spurs_players.dat" as "<1s>" };
-
-# Watford
-set Watford := { read "data/Watford_players.dat" as "<1s>" };
-
-# West Ham
-set West_Ham := { read "data/West Ham_players.dat" as "<1s>" };
-
-# Wolves
-set Wolves := { read "data/Wolves_players.dat" as "<1s>" };
+# Teams
+set Teams := { read "data/teams.dat" as "<1s>" };
 
 # Gameweeks
 set Gameweeks := { 1 .. gweeks };
@@ -92,6 +33,9 @@ param Score[Players*Gameweeks] := read "data/players_season_predicted_scores.dat
 
 # Players costs
 param Costs[Players] := read "data/players_costs.dat" as "<1s> 2n";
+
+# Players teams
+param Team[Players] := read "data/players_teams.dat" as "<1s> 2s";
 
 # --------------------------->>> Variables <<<---------------------------
 # Is the player on the team?
@@ -160,62 +104,5 @@ subto budget:
 
 
 # Team capacity
-subto Arsenal_players:
-  sum <p> in Arsenal: y[p] <= 3;
-
-subto Aston_Villa_players:
-  sum <p> in Aston_Villa: y[p] <= 3;
-
-subto Brentford_players:
-  sum <p> in Brentford: y[p] <= 3;
-
-subto Brighton_players:
-  sum <p> in Brighton: y[p] <= 3;
-
-subto Burnley_players:
-  sum <p> in Burnley: y[p] <= 3;
-
-subto Chelsea_players:
-  sum <p> in Chelsea: y[p] <= 3;
-
-subto Crystal_Palace_Players:
-  sum <p> in Crystal_Palace: y[p] <= 3;
-
-subto Everton_players:
-  sum <p> in Everton: y[p] <= 3;
-
-subto Leeds_players:
-  sum <p> in Leeds: y[p] <= 3;
-
-subto Leicester_players:
-  sum <p> in Leicester: y[p] <= 3;
-
-subto Liverpool_players:
-  sum <p> in Liverpool: y[p] <= 3;
-
-subto Man_City_Players:
-  sum <p> in Man_City: y[p] <= 3;
-
-subto Man_Utd_Players:
-  sum <p> in Man_Utd: y[p] <= 3;
-
-subto Newcastle_players:
-  sum <p> in Newcastle: y[p] <= 3;
-
-subto Norwich_players:
-  sum <p> in Norwich: y[p] <= 3;
-
-subto Southampton_players:
-  sum <p> in Southampton: y[p] <= 3;
-
-subto Spurs_players:
-  sum <p> in Spurs: y[p] <= 3;
-
-subto Watford_players:
-  sum <p> in Watford: y[p] <= 3;
-
-subto West_Ham_players:
-  sum <p> in West_Ham: y[p] <= 3;
-
-subto Wolves_players:
-  sum <p> in Wolves: y[p] <= 3;
+subto team_constrain: forall <t> in Teams:
+  sum <p> in Players with Team[p] == t: y[p] <= 3;
