@@ -55,7 +55,6 @@ maximize fobj: sum <p,j> in Players*Gameweeks: (Score[p,j] * x[p,j] + Score[p,j]
 subto total_players:
   sum <p> in Players: y[p] == 15;
 
-
 # Players by position on team
 subto gkp_on_team:
   sum <p> in Goalkeepers: y[p] == 2;
@@ -74,10 +73,14 @@ subto fwd_on_team:
 subto line_up_on_team: forall <p> in Players:
   sum <j> in Gameweeks: x[p,j] <= gweeks * y[p];
 
+# Player line up must be of 11 players:
+subto line_up_by_gw: forall <j> in Gameweeks:
+  sum <p> in Players: x[p,j] == 11;
 
 # Players by position on line up
 subto gkp_on_line_up: forall <j> in Gameweeks:
   sum <p> in Goalkeepers: x[p,j] == 1;
+
 subto def_on_line_up: forall <j> in Gameweeks:
   sum <p> in Defenders: x[p,j] >= 3;
 
@@ -91,7 +94,6 @@ subto fwd_on_line_up: forall <j> in Gameweeks:
 # One captain by gameweek
 subto captain_on_line_up: forall <j> in Gameweeks:
   sum <p> in Players: z[p,j] == 1;
-
 
 # Captain must be on line up
 subto captain_by_gw: forall <p,j> in Players*Gameweeks:
