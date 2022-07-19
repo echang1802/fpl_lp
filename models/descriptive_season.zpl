@@ -1,0 +1,156 @@
+
+# This is a base model: Do not take into account:
+#   - Players cost changes between gameweeks.
+#   - Players cost sell-buy gap
+#   - Accumulative transfers
+
+# --------------------------->>> Params <<<---------------------------
+param gweeks := 38;
+
+# --------------------------->>> Sets <<<---------------------------
+# Players
+set Players := { read "data/players_costs.dat" as "<1s>" };
+
+# Goalkeepers
+set Goalkeepers := { read "data/goalkeepers.dat" as "<1s>" };
+
+# Defenders
+set Defenders := { read "data/defenders.dat" as "<1s>" };
+
+# Midfielders
+set Midfielders := { read "data/midfielders.dat" as "<1s>" };
+
+# Forwards
+set Forwards := { read "data/forwards.dat" as "<1s>" };
+
+# Teams
+set Teams := { read "data/teams.dat" as "<1s>" };
+
+# Gameweeks
+set Gameweeks := { 1 .. gweeks };
+
+# Transfers Gameweeks
+set Transfers_Gameweeks := { 2 .. gweeks };
+
+# --------------------------->>> Data <<<---------------------------
+# Predicted scores
+param Score[Players*Gameweeks] := read "data/players_season_predicted_scores.dat" as "n+";
+
+# Players costs
+param Costs[Players] := read "data/players_costs.dat" as "<1s> 2n";
+
+# Players teams
+param Team[Players] := read "data/players_teams.dat" as "<1s> 2s";
+
+# --------------------------->>> Variables <<<---------------------------
+# Is the player on the team on gameweek j?
+var player_on_team[Players*Gameweeks] binary;
+
+# Is the player in the line-up on gameweek j?
+var player_on_lineup[Players*Gameweeks] binary;
+
+# Is the player selected as captain on gameweek j?
+var player_is_captain[Players*Gameweeks] binary;
+
+# Is the player sold on gameweek j?
+var player_is_sold[Players*Transfers_Gameweeks] binary;
+
+# Is the player bought on gameweek j?
+var player_is_bought[Players*Transfers_Gameweeks] binary;
+
+# Number of extra players sold on gameweek j?
+var players_sold[Transfers_Gameweeks] integer;
+
+# Number of extra players bought on gameweek j?
+var players_bought[Transfers_Gameweeks] integer;
+
+# --------------------------->>> Objective Function <<<---------------------------
+maximize fobj: sum <p,g> in Players*Gameweeks: (Score[p,g] * player_on_lineup[p,g] + Score[p,g] * player_is_captain[p,g]) - sum <g> in Transfers_Gameweeks: (4 * players_sold[g]);
+
+# --------------------------->>> Subject To: <<<---------------------------
+# Total number of players selected
+subto total_players: forall <g> in Gameweeks:
+  sum <p> in Players: player_on_team[p,g] == 15;
+
+# Players by position on team
+subto gkp_on_team: forall <g> in Gameweeks:
+  sum <p> in Goalkeepers: player_on_team[p,g] == 2;
+
+subto def_on_team: forall <g> in Gameweeks:
+  sum <p> in Defenders: player_on_team[p,g] == 5;
+
+subto med_on_team: forall <g> in Gameweeks:
+  sum <p> in Midfielders: player_on_team[p,g] == 5;
+
+subto fwd_on_team: forall <g> in Gameweeks:
+  sum <p> in Forwards: player_on_team[p,g] == 3;
+
+
+# Player on line up must be on team
+subto line_up_on_team: forall <p,g> in Players*Gameweeks:
+  player_on_lineup[p,g] <= player_on_team[p,g];
+
+# Player line up must be of 11 players:
+subto line_up_by_gw: forall <g> in Gameweeks:
+  sum <p> in Players: player_on_lineup[p,g] == 11;
+
+# Players by position on line up
+subto gkp_on_line_up: forall <g> in Gameweeks:
+  sum <p> in Goalkeepers: player_on_lineup[p,g] == 1;
+
+subto def_on_line_up: forall <g> in Gameweeks:
+  sum <p> in Defenders: player_on_lineup[p,g] >= 3;
+
+subto mid_on_line_up: forall <g> in Gameweeks:
+  sum <p> in Midfielders: player_on_lineup[p,g] >= 2;
+
+subto fwd_on_line_up: forall <g> in Gameweeks:
+  sum <p> in Forwards: player_on_lineup[p,g] >= 1;
+
+
+# One captain by gameweek
+subto captain_on_line_up: forall <g> in Gameweeks:
+  sum <p> in Players: player_is_captain[p,g] == 1;
+
+# Captain must be on line up
+subto captain_by_gw: forall <p,g> in Players*Gameweeks:
+  player_is_captain[p,g] <= player_on_lineup[p,g];
+
+
+# Team capacity
+subto team_constrain: forall <t,g> in Teams*Gameweeks:
+  sum <p> in Players with Team[p] == t: player_on_team[p,g] <= 3;
+
+
+# Budget
+subto budget: forall <g> in Gameweeks:
+  sum <p> in Players: Costs[p] * player_on_team[p,g] <= 100;
+
+
+# Transfers
+# Sell
+subto player_sold_on_gameweek: forall <p,g> in Players*Transfers_Gameweeks:
+  player_on_team[p,g-1] - player_is_sold[p,g] == player_on_team[p,g]
+
+subto only_sold_players_on_team: forall <p,g> in Players*Transfers_Gameweeks:
+  player_is_sold[p,g] <= player_on_team[p,g-1]
+
+# Buy
+subto player_bought_on_gameweek: forall <p,g> in Players*Transfers_Gameweeks:
+  player_is_bought[p,g] + player_on_team[p,g] == player_on_team[p,g-1]
+
+subto only_bought_players_not_on_team: forall <p,g> in Players*Transfers_Gameweeks:
+  player_is_bought[p,g] <= 1 - player_on_team[p,g]
+
+# Transfer Counters
+subto players_sold_counter: forall <g> in Transfers_Gameweeks:
+  sum <p> in Players: player_is_sold[p,g] == players_sold[g] + 1
+
+subto players_bought_counter: forall <g> in Transfers_Gameweeks:
+  sum <p> in Players: player_is_bought[p,g] == players_bought[g] + 1
+
+subto solds_equal_to_bought: forall <g> in Transfers_Gameweeks:
+  players_sold[g] == players_bought[g]
+
+subto limit_transfer: forall <g> in Transfers_Gameweeks:
+  players_sold[g] <= 1
