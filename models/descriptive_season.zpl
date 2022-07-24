@@ -6,6 +6,7 @@
 
 # --------------------------->>> Params <<<---------------------------
 param gweeks := 38;
+param penalty_by_transfer:= 4;
 
 # --------------------------->>> Sets <<<---------------------------
 # Players
@@ -52,20 +53,17 @@ var player_on_lineup[Players*Gameweeks] binary;
 # Is the player selected as captain on gameweek j?
 var player_is_captain[Players*Gameweeks] binary;
 
+# Is the player involved on a transfer on gameweek j?
+var player_is_transfered[Players*Transfers_Gameweeks] integer;
+
 # Is the player sold on gameweek j?
-var player_is_sold[Players*Transfers_Gameweeks] binary;
+var player_is_sold[Players*Gameweeks] binary;
 
-# Is the player bought on gameweek j?
-var player_is_bought[Players*Transfers_Gameweeks] binary;
-
-# Number of extra players sold on gameweek j?
-var players_sold[Transfers_Gameweeks] integer;
-
-# Number of extra players bought on gameweek j?
-var players_bought[Transfers_Gameweeks] integer;
+# Number of extra transfers made on gameweek j?
+var extra_transfers_made[Gameweeks] integer;
 
 # --------------------------->>> Objective Function <<<---------------------------
-maximize fobj: sum <p,g> in Players*Gameweeks: (Score[p,g] * player_on_lineup[p,g] + Score[p,g] * player_is_captain[p,g]) - sum <g> in Transfers_Gameweeks: (4 * players_sold[g]);
+maximize fobj: sum <p,g> in Players*Gameweeks: (Score[p,g] * (player_on_lineup[p,g] + player_is_captain[p,g]) - penalty_by_transfer * player_is_sold[p,g]);
 
 # --------------------------->>> Subject To: <<<---------------------------
 # Total number of players selected
@@ -128,29 +126,16 @@ subto budget: forall <g> in Gameweeks:
 
 
 # Transfers
-# Sell
-subto player_sold_on_gameweek: forall <p,g> in Players*Transfers_Gameweeks:
-  player_on_team[p,g-1] - player_is_sold[p,g] == player_on_team[p,g]
+subto player_transfered_on_gameweek: forall <p,g> in Players*Transfers_Gameweeks:
+  player_is_transfered[p,g] == player_on_team[p,g-1] - player_on_team[p,g]
 
-subto only_sold_players_on_team: forall <p,g> in Players*Transfers_Gameweeks:
-  player_is_sold[p,g] <= player_on_team[p,g-1]
+subto players_transfered_balance: forall <g> in Transfers_Gameweeks:
+  sum <p> in Players: player_is_transfered[p,g] == 0
 
-# Buy
-subto player_bought_on_gameweek: forall <p,g> in Players*Transfers_Gameweeks:
-  player_is_bought[p,g] + player_on_team[p,g] == player_on_team[p,g-1]
+subto players_is_sold: forall <g> in Transfers_Gameweeks:
+  player_is_transfered[p,g] <= player_is_sold[p,g]
 
-subto only_bought_players_not_on_team: forall <p,g> in Players*Transfers_Gameweeks:
-  player_is_bought[p,g] <= 1 - player_on_team[p,g]
 
 # Transfer Counters
-subto players_sold_counter: forall <g> in Transfers_Gameweeks:
-  sum <p> in Players: player_is_sold[p,g] == players_sold[g] + 1
-
-subto players_bought_counter: forall <g> in Transfers_Gameweeks:
-  sum <p> in Players: player_is_bought[p,g] == players_bought[g] + 1
-
-subto solds_equal_to_bought: forall <g> in Transfers_Gameweeks:
-  players_sold[g] == players_bought[g]
-
-subto limit_transfer: forall <g> in Transfers_Gameweeks:
-  players_sold[g] <= 1
+#subto players_transfered_counter: forall <g> in Transfers_Gameweeks:
+#  sum <p> in Players: player_is_sold[p,g] == extra_transfers_made[g]
