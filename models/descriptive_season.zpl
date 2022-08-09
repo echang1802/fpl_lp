@@ -54,7 +54,7 @@ var player_on_lineup[Players*Gameweeks] binary;
 var player_is_captain[Players*Gameweeks] binary;
 
 # Is the player involved on a transfer on gameweek j?
-var player_is_transfered[Players*Transfers_Gameweeks] integer;
+var player_is_transfered[Players*Transfers_Gameweeks] integer >= -1 <= 1;
 
 # Is the player sold on gameweek j?
 var player_is_sold[Players*Gameweeks] binary;
@@ -114,27 +114,23 @@ subto captain_on_line_up: forall <g> in Gameweeks:
 subto captain_by_gw: forall <p,g> in Players*Gameweeks:
   player_is_captain[p,g] <= player_on_lineup[p,g];
 
-
 # Team capacity
 subto team_constrain: forall <t,g> in Teams*Gameweeks:
   sum <p> in Players with Team[p] == t: player_on_team[p,g] <= 3;
-
 
 # Budget
 subto budget: forall <g> in Gameweeks:
   sum <p> in Players: Costs[p] * player_on_team[p,g] <= 100;
 
-
 # Transfers
-subto player_transfered_on_gameweek: forall <p,g> in Players*Transfers_Gameweeks:
-  player_is_transfered[p,g] == player_on_team[p,g-1] - player_on_team[p,g]
+subto flayer_transfered_on_gameweek: forall <p,g> in Players*Transfers_Gameweeks:
+  player_is_transfered[p,g] == player_on_team[p,g-1] - player_on_team[p,g];
 
-subto players_transfered_balance: forall <g> in Transfers_Gameweeks:
-  sum <p> in Players: player_is_transfered[p,g] == 0
+subto dlayers_transfered_balance: forall <g> in Transfers_Gameweeks:
+  sum <p> in Players: player_is_transfered[p,g] == 0;
 
-subto players_is_sold: forall <g> in Transfers_Gameweeks:
-  player_is_transfered[p,g] <= player_is_sold[p,g]
-
+subto glayers_is_sold: forall <p,g> in Players*Transfers_Gameweeks:
+  player_is_transfered[p,g] <= player_is_sold[p,g];
 
 # Transfer Counters
 #subto players_transfered_counter: forall <g> in Transfers_Gameweeks:

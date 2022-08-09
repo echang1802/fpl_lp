@@ -8,7 +8,7 @@ Linear programing tests over the team selection on the Fantasy Premier League
 To run the model go to model folder on a command window and type:  (on Windows)
 
 ```
-scip -f base_model.zpl
+scip -f base_model.zpl -l result.log
 ```
 
 ## SciPy Model
