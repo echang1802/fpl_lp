@@ -63,7 +63,7 @@ var player_is_sold[Players*Gameweeks] binary;
 var extra_transfers_made[Gameweeks] integer;
 
 # --------------------------->>> Objective Function <<<---------------------------
-maximize fobj: sum <p,g> in Players*Gameweeks: (Score[p,g] * (player_on_lineup[p,g] + player_is_captain[p,g])) - sum <g> in Transfers_Gameweeks : penalty_by_transfer * extra_transfers_made[g];
+maximize fobj: sum <p,g> in Players*Gameweeks: ((Score[p,g] * (player_on_lineup[p,g] + player_is_captain[p,g])) - penalty_by_transfer * extra_transfers_made[g]);
 
 # --------------------------->>> Subject To: <<<---------------------------
 # Total number of players selected
@@ -133,5 +133,5 @@ subto glayers_is_sold: forall <p,g> in Players*Transfers_Gameweeks:
   player_is_transfered[p,g] <= player_is_sold[p,g];
 
 # Transfer Counters
-#subto players_transfered_counter: forall <g> in Transfers_Gameweeks:
-#  sum <p> in Players: player_is_sold[p,g] == extra_transfers_made[g] + 1
+subto players_transfered_counter: forall <g> in Transfers_Gameweeks:
+  sum <p> in Players: player_is_sold[p,g] == extra_transfers_made[g] + 1;
